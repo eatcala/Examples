@@ -24,7 +24,7 @@ volatile int current_step_nb   = 0;
 /*******************************************************************************
  * Function
  ******************************************************************************/
-static void Stepper_MsgHandler(container_t *container, msg_t *msg);
+static void Stepper_MsgHandler(service_t *service, msg_t *msg);
 static void compute_speed(void);
 
 /******************************************************************************
@@ -36,7 +36,7 @@ void Stepper_Init(void)
 {
     revision_t revision = {.unmap = REV};
 
-    Luos_CreateContainer(Stepper_MsgHandler, STEPPER_MOD, "stepper_mod", revision);
+    Luos_CreateService(Stepper_MsgHandler, STEPPER_MOD, "stepper_mod", revision);
     motor.resolution           = 200.0;
     motor.wheel_diameter       = 0.0;
     motor.target_angular_speed = 100.0;
@@ -67,12 +67,12 @@ void Stepper_Loop(void)
     target_step_nb   = (int)(motor.target_angular_position / degPerStep);
 }
 /******************************************************************************
- * @brief Msg Handler call back when a msg receive for this container
- * @param Container destination
+ * @brief Msg Handler call back when a msg receive for this service
+ * @param Service destination
  * @param Msg receive
  * @return None
  ******************************************************************************/
-static void Stepper_MsgHandler(container_t *container, msg_t *msg)
+static void Stepper_MsgHandler(service_t *service, msg_t *msg)
 {
     if (msg->header.cmd == PARAMETERS)
     {

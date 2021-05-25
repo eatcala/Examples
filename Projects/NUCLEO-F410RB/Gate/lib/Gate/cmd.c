@@ -44,7 +44,7 @@ void check_json(uint16_t carac_nbr)
     }
 }
 
-void send_cmds(container_t *container)
+void send_cmds(service_t *service)
 {
     msg_t msg;
 
@@ -76,7 +76,7 @@ void send_cmds(container_t *container)
             if (cJSON_IsNumber(cJSON_GetObjectItem(root, "baudrate")))
             {
                 uint32_t baudrate = (float)cJSON_GetObjectItem(root, "baudrate")->valueint;
-                Luos_SendBaudrate(container, baudrate);
+                Luos_SendBaudrate(service, baudrate);
             }
         }
         if (cJSON_GetObjectItem(root, "benchmark") != NULL)
@@ -120,7 +120,7 @@ void send_cmds(container_t *container)
                         int i = 0;
                         for (i = 0; i < repetition; i++)
                         {
-                            if (Luos_SendData(container, &msg, &bin_data[index], (unsigned int)size) == FAILED)
+                            if (Luos_SendData(service, &msg, &bin_data[index], (unsigned int)size) == FAILED)
                             {
                                 failed_msg_nb++;
                             }
@@ -135,16 +135,16 @@ void send_cmds(container_t *container)
                 }
             }
         }
-        cJSON *containers = cJSON_GetObjectItem(root, "containers");
-        // Get containers
-        if (cJSON_IsObject(containers))
+        cJSON *services = cJSON_GetObjectItem(root, "services");
+        // Get services
+        if (cJSON_IsObject(services))
         {
-            // Loop into containers
-            cJSON *container_jsn = containers->child;
-            while (container_jsn != NULL)
+            // Loop into services
+            cJSON *service_jsn = services->child;
+            while (service_jsn != NULL)
             {
                 // Create msg
-                char *alias = container_jsn->string;
+                char *alias = service_jsn->string;
                 uint16_t id = RoutingTB_IDFromAlias(alias);
                 if (id == 65535)
                 {
@@ -155,9 +155,9 @@ void send_cmds(container_t *container)
                     return;
                 }
                 luos_type_t type = RoutingTB_TypeFromID(id);
-                json_to_msg(container, id, type, container_jsn, &msg, (char *)buf[concerned_table]);
-                // Get next container
-                container_jsn = container_jsn->next;
+                json_to_msg(service, id, type, service_jsn, &msg, (char *)buf[concerned_table]);
+                // Get next service
+                service_jsn = service_jsn->next;
             }
         }
         cJSON_Delete(root);

@@ -18,8 +18,8 @@
 /*******************************************************************************
  * Function
  ******************************************************************************/
-void PipeLink_Send(container_t *service, void *data, uint32_t size);
-short PipeLink_Find(container_t *service);
+void PipeLink_Send(service_t *service, void *data, uint32_t size);
+short PipeLink_Find(service_t *service);
 short PipeLink_GetId(void);
 
 #endif /* PIPE_LINK_H */

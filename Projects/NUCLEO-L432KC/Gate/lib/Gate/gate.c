@@ -1,6 +1,6 @@
 /******************************************************************************
  * @file gate
- * @brief Container gate
+ * @brief Service gate
  * @author Luos
  * @version 0.0.0
  ******************************************************************************/
@@ -30,11 +30,11 @@ static void Usart_Init(void);
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-container_t *container;
+service_t *service;
 msg_t msg;
 volatile char *RxData;
 uint16_t RxDataCtn;
-container_t *container_pointer;
+service_t *service_pointer;
 volatile msg_t pub_msg;
 
 volatile int pub = LUOS_PROTOCOL_NB;
@@ -55,7 +55,7 @@ void Gate_Init(void)
     RxData    = get_json_buf();
     RxDataCtn = 0;
 #endif
-    container = Luos_CreateContainer(0, GATE_MOD, "gate", revision);
+    service = Luos_CreateService(0, GATE_MOD, "gate", revision);
 }
 
 __attribute__((weak)) void json_send(char *json)
@@ -78,19 +78,19 @@ void Gate_Loop(void)
     static char state                      = 0;
     uint32_t tickstart                     = 0;
 
-    // Check if there is a dead container
-    if (container->ll_container->dead_container_spotted)
+    // Check if there is a dead service
+    if (service->ll_service->dead_service_spotted)
     {
         char json[JSON_BUFF_SIZE] = {0};
-        exclude_container_to_json(container->ll_container->dead_container_spotted, json);
+        exclude_service_to_json(service->ll_service->dead_service_spotted, json);
         json_send(json);
-        container->ll_container->dead_container_spotted = 0;
+        service->ll_service->dead_service_spotted = 0;
     }
     if (detection_done)
     {
         char json[JSON_BUFF_SIZE] = {0};
         state                     = !state;
-        format_data(container, json);
+        format_data(service, json);
         if (json[0] != '\0')
         {
             json_send(json);
@@ -108,19 +108,19 @@ void Gate_Loop(void)
                 keepAlive++;
             }
         }
-        collect_data(container);
+        collect_data(service);
     }
     if (pub != LUOS_PROTOCOL_NB)
     {
-        Luos_SendMsg(container_pointer, (msg_t *)&pub_msg);
+        Luos_SendMsg(service_pointer, (msg_t *)&pub_msg);
         pub = LUOS_PROTOCOL_NB;
     }
     // check if serial input messages ready and convert it into a luos message
-    send_cmds(container);
+    send_cmds(service);
     if (detection_ask)
     {
         char json[JSON_BUFF_SIZE * 2] = {0};
-        RoutingTB_DetectContainers(container);
+        RoutingTB_DetectServices(service);
         routing_table_to_json(json);
         json_send(json);
         detection_done = 1;

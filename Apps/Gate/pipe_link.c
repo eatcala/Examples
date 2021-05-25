@@ -7,7 +7,7 @@
 
 short pipe_id = 0;
 
-void PipeLink_Send(container_t *service, void *data, uint32_t size)
+void PipeLink_Send(service_t *service, void *data, uint32_t size)
 {
     LUOS_ASSERT(pipe_id > 0);
     msg_t msg;
@@ -17,7 +17,7 @@ void PipeLink_Send(container_t *service, void *data, uint32_t size)
     Luos_SendData(service, &msg, data, size);
 }
 
-short PipeLink_Find(container_t *service)
+short PipeLink_Find(service_t *service)
 {
     pipe_id = RoutingTB_IDFromType(PIPE_MOD);
     if (pipe_id > 0)

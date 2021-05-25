@@ -19,23 +19,23 @@
  ******************************************************************************/
 volatile msg_t pub_msg;
 volatile int pub = LUOS_PROTOCOL_NB;
-volatile dxl_t dxl[MAX_CONTAINER_NUMBER];
+volatile dxl_t dxl[MAX_SERVICE_NUMBER];
 volatile unsigned char request_nb = 0;
-container_t *my_container[MAX_CONTAINER_NUMBER];
-container_t *container_pointer;
-uint16_t dxl_table[MAX_CONTAINER_NUMBER];
-uint8_t dxl_request_table[MAX_CONTAINER_NUMBER];
-dxl_models_t dxl_model[MAX_CONTAINER_NUMBER];
-uint16_t position[MAX_CONTAINER_NUMBER]    = {0};
-uint16_t temperature[MAX_CONTAINER_NUMBER] = {0};
-volatile char publish                      = 0;
+service_t *my_service[MAX_SERVICE_NUMBER];
+service_t *service_pointer;
+uint16_t dxl_table[MAX_SERVICE_NUMBER];
+uint8_t dxl_request_table[MAX_SERVICE_NUMBER];
+dxl_models_t dxl_model[MAX_SERVICE_NUMBER];
+uint16_t position[MAX_SERVICE_NUMBER]    = {0};
+uint16_t temperature[MAX_SERVICE_NUMBER] = {0};
+volatile char publish                    = 0;
 /*******************************************************************************
  * Function
  ******************************************************************************/
-static void Dxl_MsgHandler(container_t *container, msg_t *msg);
+static void Dxl_MsgHandler(service_t *service, msg_t *msg);
 static void discover_dxl(void);
 static void dxl_request_manager(void);
-static int find_id(container_t *container);
+static int find_id(service_t *service);
 
 /******************************************************************************
  * @brief init must be call in project init
@@ -55,8 +55,8 @@ void Dxl_Init(void)
  ******************************************************************************/
 void Dxl_Loop(void)
 {
-    static int id                                   = 0;
-    static uint32_t last_temp[MAX_CONTAINER_NUMBER] = {0};
+    static int id                                 = 0;
+    static uint32_t last_temp[MAX_SERVICE_NUMBER] = {0};
     //check motor values one by one
     // Get motor info
     if (dxl_table[id] == 0)
@@ -83,12 +83,12 @@ void Dxl_Loop(void)
     dxl_request_manager();
 }
 /******************************************************************************
- * @brief Msg handler call back when a msg receive for this container
- * @param Container destination
+ * @brief Msg handler call back when a msg receive for this service
+ * @param Service destination
  * @param Msg receive
  * @return None
  ******************************************************************************/
-static void Dxl_MsgHandler(container_t *container, msg_t *msg)
+static void Dxl_MsgHandler(service_t *service, msg_t *msg)
 {
     static unsigned char last = 0;
 
@@ -99,12 +99,12 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
         memcpy(&reg, msg->data, sizeof(uint16_t));
         memcpy(&val, &msg->data[2], (msg->header.size - sizeof(uint16_t)));
 
-        dxl[last].val               = (float)val;
-        dxl[last].reg               = reg;
-        dxl[last].container_pointer = container;
-        dxl[last].mode              = MODE_REG;
+        dxl[last].val             = (float)val;
+        dxl[last].reg             = reg;
+        dxl[last].service_pointer = service;
+        dxl[last].mode            = MODE_REG;
         last++;
-        if (last == MAX_CONTAINER_NUMBER)
+        if (last == MAX_SERVICE_NUMBER)
         {
             last = 0;
         }
@@ -115,11 +115,11 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
     {
         char id;
         memcpy(&id, msg->data, sizeof(char));
-        dxl[last].val               = id;
-        dxl[last].container_pointer = container;
-        dxl[last].mode              = MODE_ID;
+        dxl[last].val             = id;
+        dxl[last].service_pointer = service;
+        dxl[last].mode            = MODE_ID;
         last++;
-        if (last == MAX_CONTAINER_NUMBER)
+        if (last == MAX_SERVICE_NUMBER)
         {
             last = 0;
         }
@@ -128,10 +128,10 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
     }
     if (msg->header.cmd == REINIT)
     {
-        dxl[last].container_pointer = container;
-        dxl[last].mode              = MODE_DETECT;
+        dxl[last].service_pointer = service;
+        dxl[last].mode            = MODE_DETECT;
         last++;
-        if (last == MAX_CONTAINER_NUMBER)
+        if (last == MAX_SERVICE_NUMBER)
         {
             last = 0;
         }
@@ -141,10 +141,10 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
     if (msg->header.cmd == ANGULAR_POSITION)
     {
         AngularOD_PositionFromMsg((angular_position_t *)&dxl[last].val, msg);
-        dxl[last].container_pointer = container;
-        dxl[last].mode              = MODE_ANGLE;
+        dxl[last].service_pointer = service;
+        dxl[last].mode            = MODE_ANGLE;
         last++;
-        if (last == MAX_CONTAINER_NUMBER)
+        if (last == MAX_SERVICE_NUMBER)
         {
             last = 0;
         }
@@ -155,11 +155,11 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
     {
         float load;
         memcpy(&load, msg->data, sizeof(float));
-        dxl[last].val               = load;
-        dxl[last].container_pointer = container;
-        dxl[last].mode              = MODE_POWER_LIMIT;
+        dxl[last].val             = load;
+        dxl[last].service_pointer = service;
+        dxl[last].mode            = MODE_POWER_LIMIT;
         last++;
-        if (last == MAX_CONTAINER_NUMBER)
+        if (last == MAX_SERVICE_NUMBER)
         {
             last = 0;
         }
@@ -180,10 +180,10 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
             pid[i] = (int)fpid[i];
         }
         memcpy((void *)&dxl[last].val, pid, 3 * sizeof(char));
-        dxl[last].container_pointer = container;
-        dxl[last].mode              = MODE_PID;
+        dxl[last].service_pointer = service;
+        dxl[last].mode            = MODE_PID;
         last++;
-        if (last == MAX_CONTAINER_NUMBER)
+        if (last == MAX_SERVICE_NUMBER)
         {
             last = 0;
         }
@@ -194,12 +194,12 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
     {
         angular_position_t angle[2];
         memcpy(&angle, msg->data, 2 * sizeof(float));
-        dxl[last].val               = angle[0];
-        dxl[last].val2              = angle[1];
-        dxl[last].container_pointer = container;
-        dxl[last].mode              = MODE_ANGLE_LIMIT;
+        dxl[last].val             = angle[0];
+        dxl[last].val2            = angle[1];
+        dxl[last].service_pointer = service;
+        dxl[last].mode            = MODE_ANGLE_LIMIT;
         last++;
-        if (last == MAX_CONTAINER_NUMBER)
+        if (last == MAX_SERVICE_NUMBER)
         {
             last = 0;
         }
@@ -209,10 +209,10 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
     if (msg->header.cmd == ANGULAR_SPEED)
     {
         AngularOD_SpeedFromMsg((angular_speed_t *)&dxl[last].val, msg);
-        dxl[last].container_pointer = container;
-        dxl[last].mode              = MODE_SPEED;
+        dxl[last].service_pointer = service;
+        dxl[last].mode            = MODE_SPEED;
         last++;
-        if (last == MAX_CONTAINER_NUMBER)
+        if (last == MAX_SERVICE_NUMBER)
         {
             last = 0;
         }
@@ -221,11 +221,11 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
     }
     if (msg->header.cmd == DXL_WHEELMODE)
     {
-        dxl[last].reg               = (int)msg->data[0];
-        dxl[last].container_pointer = container;
-        dxl[last].mode              = MODE_WHEEL;
+        dxl[last].reg             = (int)msg->data[0];
+        dxl[last].service_pointer = service;
+        dxl[last].mode            = MODE_WHEEL;
         last++;
-        if (last == MAX_CONTAINER_NUMBER)
+        if (last == MAX_SERVICE_NUMBER)
         {
             last = 0;
         }
@@ -234,12 +234,12 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
     }
     if (msg->header.cmd == COMPLIANT)
     {
-        dxl[last].reg               = (int)msg->data[0];
-        dxl[last].container_pointer = container;
-        dxl[last].mode              = MODE_COMPLIANT;
+        dxl[last].reg             = (int)msg->data[0];
+        dxl[last].service_pointer = service;
+        dxl[last].mode            = MODE_COMPLIANT;
         request_nb++;
         last++;
-        if (last == MAX_CONTAINER_NUMBER)
+        if (last == MAX_SERVICE_NUMBER)
         {
             last = 0;
         }
@@ -247,7 +247,7 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
         {
             angular_position_t value;
             // convert data into deg
-            int i = find_id(container);
+            int i = find_id(service);
             if (dxl_model[i] == AX12 || dxl_model[i] == AX18 || dxl_model[i] == XL320)
             {
                 value = AngularOD_PositionFrom_deg(((300.0 * (float)position[i]) / (1024.0 - 1.0)) - (300.0 / 2));
@@ -256,11 +256,11 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
             {
                 value = AngularOD_PositionFrom_deg(((360.0 * (float)position[i]) / (4096.0 - 1.0)) - (360.0 / 2));
             }
-            dxl[last].val               = AngularOD_PositionTo_deg(value);
-            dxl[last].container_pointer = container;
-            dxl[last].mode              = MODE_ANGLE;
+            dxl[last].val             = AngularOD_PositionTo_deg(value);
+            dxl[last].service_pointer = service;
+            dxl[last].mode            = MODE_ANGLE;
             last++;
-            if (last == MAX_CONTAINER_NUMBER)
+            if (last == MAX_SERVICE_NUMBER)
             {
                 last = 0;
             }
@@ -272,10 +272,10 @@ static void Dxl_MsgHandler(container_t *container, msg_t *msg)
     {
         if (!publish)
         {
-            pub_msg.header.target                 = msg->header.source;
-            container_pointer                     = container;
-            pub                                   = ASK_PUB_CMD;
-            dxl_request_table[find_id(container)] = 1;
+            pub_msg.header.target               = msg->header.source;
+            service_pointer                     = service;
+            pub                                 = ASK_PUB_CMD;
+            dxl_request_table[find_id(service)] = 1;
         }
         return;
     }
@@ -286,13 +286,13 @@ static void discover_dxl(void)
     revision_t revision = {.unmap = REV};
     int y               = 0;
     char my_string[15];
-    // Clear container table
-    Luos_ContainersClear();
+    // Clear service table
+    Luos_ServicesClear();
     // Clear local tables
-    memset(my_container, 0, sizeof(container_t *) * MAX_CONTAINER_NUMBER);
-    memset(dxl_table, 0, sizeof(uint16_t) * MAX_CONTAINER_NUMBER);
-    memset(dxl_model, 0, sizeof(dxl_models_t) * MAX_CONTAINER_NUMBER);
-    memset((void *)dxl, 0, sizeof(dxl_t) * MAX_CONTAINER_NUMBER);
+    memset(my_service, 0, sizeof(service_t *) * MAX_SERVICE_NUMBER);
+    memset(dxl_table, 0, sizeof(uint16_t) * MAX_SERVICE_NUMBER);
+    memset(dxl_model, 0, sizeof(dxl_models_t) * MAX_SERVICE_NUMBER);
+    memset((void *)dxl, 0, sizeof(dxl_t) * MAX_SERVICE_NUMBER);
 
     HAL_NVIC_DisableIRQ(USART3_4_IRQn);
     HAL_NVIC_SetPriority(USART3_4_IRQn, 0, 0);
@@ -304,8 +304,8 @@ static void discover_dxl(void)
         {
             // no timeout occured, there is a servo here
             sprintf(my_string, "dxl_%d", i);
-            my_container[y] = Luos_CreateContainer(Dxl_MsgHandler, DYNAMIXEL_MOD, my_string, revision);
-            dxl_table[y]    = i;
+            my_service[y] = Luos_CreateService(Dxl_MsgHandler, DYNAMIXEL_MOD, my_string, revision);
+            dxl_table[y]  = i;
 
             servo_get_raw_word(i, SERVO_REGISTER_MODEL_NUMBER, (uint16_t *)&dxl_model[y], DXL_TIMEOUT);
             // put a delay on motor response
@@ -320,8 +320,8 @@ static void discover_dxl(void)
     HAL_NVIC_EnableIRQ(USART3_4_IRQn);
     if (y == 0)
     {
-        // there is no motor detected, create a Void container to only manage l0 things
-        my_container[y] = Luos_CreateContainer(Dxl_MsgHandler, VOID_MOD, "void_dxl", revision);
+        // there is no motor detected, create a Void service to only manage l0 things
+        my_service[y] = Luos_CreateService(Dxl_MsgHandler, VOID_MOD, "void_dxl", revision);
     }
 }
 
@@ -335,15 +335,15 @@ static void dxl_request_manager(void)
         __disable_irq();
         request_nb--;
         __enable_irq();
-        // find the motor id from container_pointer
-        i = find_id(dxl[last].container_pointer);
-        if (i < MAX_CONTAINER_NUMBER)
+        // find the motor id from service_pointer
+        i = find_id(dxl[last].service_pointer);
+        if (i < MAX_SERVICE_NUMBER)
         {
             if (dxl[last].mode == MODE_REG)
             {
                 if (dxl[last].reg == SERVO_REGISTER_BAUD_RATE)
                 {
-                    if (dxl[last].container_pointer->ll_container->type == VOID_MOD)
+                    if (dxl[last].service_pointer->ll_service->type == VOID_MOD)
                     {
                         servo_init(57600);
                         HAL_Delay(500);
@@ -388,7 +388,7 @@ static void dxl_request_manager(void)
                         }
                         else
                         {
-                            // void container will use this mode
+                            // void service will use this mode
                             switch ((uint32_t)dxl[last].val)
                             {
                                 case 9600:
@@ -407,16 +407,16 @@ static void dxl_request_manager(void)
 
                         servo_set_raw_byte(SERVO_BROADCAST_ID, SERVO_REGISTER_BAUD_RATE, baud, DXL_TIMEOUT);
 
-                        // Set actual baudrate into container
+                        // Set actual baudrate into service
                         servo_init((uint32_t)dxl[last].val);
                     }
                 }
                 if (dxl[last].reg == FACTORY_RESET_REG)
                 {
-                    // check if it is a void container or not
-                    if (dxl[last].container_pointer->ll_container->type == VOID_MOD)
+                    // check if it is a void service or not
+                    if (dxl[last].service_pointer->ll_service->type == VOID_MOD)
                     {
-                        //If it is a void container send it to general call
+                        //If it is a void service send it to general call
                         servo_factory_reset(SERVO_BROADCAST_ID, DXL_TIMEOUT);
                     }
                     else
@@ -564,7 +564,7 @@ static void dxl_request_manager(void)
             }
         }
         last++;
-        if (last == MAX_CONTAINER_NUMBER)
+        if (last == MAX_SERVICE_NUMBER)
         {
             last = 0;
         }
@@ -597,13 +597,13 @@ void dxl_publish_manager(void)
                 }
                 // Send position informations deg
                 AngularOD_PositionToMsg(&value, (msg_t *)&pub_msg);
-                Luos_SendMsg(my_container[i], (msg_t *)&pub_msg);
+                Luos_SendMsg(my_service[i], (msg_t *)&pub_msg);
                 // Send temperature informations °C if there is a value
                 if (temperature[i] != 0)
                 {
                     temperature_t temp = TemperatureOD_TemperatureFrom_deg_c(temperature[i]);
                     TemperatureOD_TemperatureToMsg(&temp, (msg_t *)&pub_msg);
-                    Luos_SendMsg(my_container[i], (msg_t *)&pub_msg);
+                    Luos_SendMsg(my_service[i], (msg_t *)&pub_msg);
                     temperature[i] = 0;
                 }
             }
@@ -614,13 +614,13 @@ void dxl_publish_manager(void)
     publish = 0;
 }
 
-static int find_id(container_t *container)
+static int find_id(service_t *service)
 {
 
     int i = 0;
-    for (i = 0; i <= MAX_CONTAINER_NUMBER; i++)
+    for (i = 0; i <= MAX_SERVICE_NUMBER; i++)
     {
-        if ((int)container == (int)my_container[i])
+        if ((int)service == (int)my_service[i])
             return i;
     }
     return i;

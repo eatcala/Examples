@@ -18,7 +18,7 @@
 /*******************************************************************************
  * Function
  ******************************************************************************/
-static void PowerSwitch_MsgHandler(container_t *container, msg_t *msg);
+static void PowerSwitch_MsgHandler(service_t *service, msg_t *msg);
 
 /******************************************************************************
  * @brief init must be call in project init
@@ -29,7 +29,7 @@ void PowerSwitch_Init(void)
 {
     revision_t revision = {.unmap = REV};
 
-    Luos_CreateContainer(PowerSwitch_MsgHandler, STATE_MOD, "switch_mod", revision);
+    Luos_CreateService(PowerSwitch_MsgHandler, STATE_MOD, "switch_mod", revision);
 }
 /******************************************************************************
  * @brief loop must be call in project loop
@@ -40,12 +40,12 @@ void PowerSwitch_Loop(void)
 {
 }
 /******************************************************************************
- * @brief Msg Handler call back when a msg receive for this container
- * @param Container destination
+ * @brief Msg Handler call back when a msg receive for this service
+ * @param Service destination
  * @param Msg receive
  * @return None
  ******************************************************************************/
-static void PowerSwitch_MsgHandler(container_t *container, msg_t *msg)
+static void PowerSwitch_MsgHandler(service_t *service, msg_t *msg)
 {
     if (msg->header.cmd == IO_STATE)
     {
