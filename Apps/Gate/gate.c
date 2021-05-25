@@ -20,7 +20,7 @@
  ******************************************************************************/
 container_t *gate;
 char detection_ask      = 0;
-time_luos_t update_time = REFRESH_TIME_S;
+time_luos_t update_time = GATE_REFRESH_TIME_S;
 /*******************************************************************************
  * Function
  ******************************************************************************/
@@ -95,7 +95,7 @@ void Gate_Loop(void)
             // Create data from container
             Convert_RoutingTableData(gate);
 #ifndef GATE_POLLING
-            // Set update frequecy
+            // Set update frequency
             DataManager_collect(gate);
 #endif
             gate_running  = true;

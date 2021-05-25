@@ -100,7 +100,7 @@ void Convert_DataToLuos(container_t *service, char *data)
             {
                 // find the first \r of the current buf
                 int index = 0;
-                for (index = 0; index < JSON_BUFF_SIZE; index++)
+                for (index = 0; index < GATE_BUFF_SIZE; index++)
                 {
                     if (data[index] == '\r')
                     {
@@ -108,7 +108,7 @@ void Convert_DataToLuos(container_t *service, char *data)
                         break;
                     }
                 }
-                if (index < JSON_BUFF_SIZE - 1)
+                if (index < GATE_BUFF_SIZE - 1)
                 {
                     // stop sensor polling during benchmark
                     update_time = 0.0;
@@ -169,7 +169,7 @@ void Convert_DataToLuos(container_t *service, char *data)
                     sprintf(tx_json, "{\"benchmark\":{\"data_rate\":%" PRId32 ".%" PRIu32 ",\"fail_rate\":%" PRId32 ".%" PRIu32 "}}\n", dataIntegerPart, dataDecimalPart, failIntegerPart, failDecimalPart);
                     PipeLink_Send(service, tx_json, strlen(tx_json));
                     // restart sensor polling
-                    update_time = REFRESH_TIME_S;
+                    update_time = GATE_REFRESH_TIME_S;
                     DataManager_collect(service);
                 }
             }
@@ -234,7 +234,7 @@ void Convert_JsonToMsg(container_t *service, uint16_t id, luos_type_t type, cJSO
         item     = cJSON_GetObjectItem(jobj, "target_rot_position");
         int size = (int)cJSON_GetArrayItem(item, 0)->valueint;
         // find the first \r of the current buf
-        for (i = 0; i < JSON_BUFF_SIZE; i++)
+        for (i = 0; i < GATE_BUFF_SIZE; i++)
         {
             if (bin_data[i] == '\r')
             {
@@ -242,7 +242,7 @@ void Convert_JsonToMsg(container_t *service, uint16_t id, luos_type_t type, cJSO
                 break;
             }
         }
-        if (i < JSON_BUFF_SIZE - 1)
+        if (i < GATE_BUFF_SIZE - 1)
         {
             msg->header.cmd = ANGULAR_POSITION;
             Luos_SendData(service, msg, &bin_data[i], (unsigned int)size);
@@ -334,7 +334,7 @@ void Convert_JsonToMsg(container_t *service, uint16_t id, luos_type_t type, cJSO
         item     = cJSON_GetObjectItem(jobj, "target_trans_position");
         int size = (int)cJSON_GetArrayItem(item, 0)->valueint;
         // find the first \r of the current buf
-        for (i = 0; i < JSON_BUFF_SIZE; i++)
+        for (i = 0; i < GATE_BUFF_SIZE; i++)
         {
             if (bin_data[i] == '\r')
             {
@@ -342,7 +342,7 @@ void Convert_JsonToMsg(container_t *service, uint16_t id, luos_type_t type, cJSO
                 break;
             }
         }
-        if (i < JSON_BUFF_SIZE - 1)
+        if (i < GATE_BUFF_SIZE - 1)
         {
             msg->header.cmd = LINEAR_POSITION;
             // todo WATCHOUT this could be mm !
@@ -468,7 +468,7 @@ void Convert_JsonToMsg(container_t *service, uint16_t id, luos_type_t type, cJSO
             // This is a binary
             size = (int)cJSON_GetArrayItem(item, 0)->valueint;
             // find the first \r of the current buf
-            for (i = 0; i < JSON_BUFF_SIZE; i++)
+            for (i = 0; i < GATE_BUFF_SIZE; i++)
             {
                 if (bin_data[i] == '\r')
                 {
@@ -476,7 +476,7 @@ void Convert_JsonToMsg(container_t *service, uint16_t id, luos_type_t type, cJSO
                     break;
                 }
             }
-            if (i < JSON_BUFF_SIZE - 1)
+            if (i < GATE_BUFF_SIZE - 1)
             {
                 msg->header.cmd = COLOR;
                 Luos_SendData(service, msg, &bin_data[i], (unsigned int)size);
@@ -962,7 +962,7 @@ void node_assert(char *file, uint32_t line)
 void Convert_RoutingTableData(container_t *service)
 {
     // Init the json string
-    char json[JSON_BUFF_SIZE * 2];
+    char json[GATE_BUFF_SIZE * 2];
     char *json_ptr = json;
     sprintf(json_ptr, "{\"routing_table\":[");
     json_ptr += strlen(json_ptr);

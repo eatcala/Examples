@@ -79,7 +79,7 @@ void DataManager_Run(container_t *service)
 void DataManager_Format(container_t *service)
 {
     uint32_t FirstNoReceptionDate = 0;
-    char data[JSON_BUFF_SIZE];
+    char data[GATE_BUFF_SIZE];
     char *data_ptr  = data;
     msg_t *data_msg = 0;
     uint8_t data_ok = false;
@@ -105,7 +105,7 @@ void DataManager_Format(container_t *service)
             {
                 // This message is a command from pipe
                 // Convert the received data into Luos commands
-                static char data_cmd[JSON_BUFF_SIZE];
+                static char data_cmd[GATE_BUFF_SIZE];
                 if (Luos_ReceiveData(service, data_msg, data_cmd) == SUCCEED)
                 {
                     // We finish to receive this data, execute the received command
@@ -128,7 +128,7 @@ void DataManager_Format(container_t *service)
                 } while (Luos_ReadFromContainer(service, data_msg->header.source, &data_msg) == SUCCEED);
 
                 Convert_EndServiceData(data_ptr);
-                LUOS_ASSERT((data_ptr - data) < JSON_BUFF_SIZE);
+                LUOS_ASSERT((data_ptr - data) < GATE_BUFF_SIZE);
             }
         }
         if (data_ok)

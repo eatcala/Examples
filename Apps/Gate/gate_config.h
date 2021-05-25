@@ -8,12 +8,12 @@
 
 #include "luos.h"
 
-#ifndef JSON_BUFF_SIZE
-#define JSON_BUFF_SIZE 1024
+#ifndef GATE_BUFF_SIZE
+#define GATE_BUFF_SIZE 1024
 #endif
 
-#ifndef REFRESH_TIME_S
-#define REFRESH_TIME_S 0.01f
+#ifndef GATE_REFRESH_TIME_S
+#define GATE_REFRESH_TIME_S 0.01f
 #endif
 
 // #define GATE_POLLING
