@@ -6,7 +6,7 @@
  ******************************************************************************/
 #include "main.h"
 #include "power_switch.h"
-#include "template_state.h"
+#include "profile_state.h"
 
 /*******************************************************************************
  * Definitions
@@ -15,8 +15,8 @@
 /*******************************************************************************
  * Variables
  ******************************************************************************/
-template_state_t power_switch_template;
-profile_state_t *power_switch = &power_switch_template.profile;
+profile_core_t power_switch_profile;
+profile_state_t power_switch;
 /*******************************************************************************
  * Function
  ******************************************************************************/
@@ -30,8 +30,10 @@ void PowerSwitch_Init(void)
 {
     revision_t revision = {.major = 1, .minor = 0, .build = 0};
     // Profile configuration
-    power_switch->access = WRITE_ONLY_ACCESS;
-    TemplateState_CreateService(0, &power_switch_template, "power_switch", revision);
+    power_switch.access = WRITE_ONLY_ACCESS;
+
+    Luos_LinkStateProfile(&power_switch_profile, &power_switch, 0);
+    Luos_LaunchProfile(&power_switch_profile, "power_switch", revision);
 }
 /******************************************************************************
  * @brief loop must be call in project loop
@@ -40,5 +42,5 @@ void PowerSwitch_Init(void)
  ******************************************************************************/
 void PowerSwitch_Loop(void)
 {
-    HAL_GPIO_WritePin(GPIOA, SWITCH_Pin, power_switch->state);
+    HAL_GPIO_WritePin(GPIOA, SWITCH_Pin, power_switch.state);
 }
