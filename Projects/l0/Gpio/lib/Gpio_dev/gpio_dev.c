@@ -4,44 +4,34 @@
  * @author Luos
  * @version 0.0.0
  ******************************************************************************/
-#include <gpio_dev.h>
-#include "main.h"
-#include "analog.h"
+#include "gpio_dev.h"
+#include "ll_gpio.h"
+
 #include "profile_state.h"
 #include "profile_voltage.h"
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-
-// Pin configuration
-#define P1_Pin       GPIO_PIN_0
-#define P1_GPIO_Port GPIOA
-#define P9_Pin       GPIO_PIN_1
-#define P9_GPIO_Port GPIOA
-#define P8_Pin       GPIO_PIN_0
-#define P8_GPIO_Port GPIOB
-#define P7_Pin       GPIO_PIN_1
-#define P7_GPIO_Port GPIOB
-
-enum
+typedef struct driver
 {
-    P2,
-    P3,
-    P4,
-    P5,
-    P6,
-    GPIO_NB
-} gpio_enum_t;
+    void (*init)(void);
+    uint8_t (*read)(void *);
+    uint8_t (*write)(void *);
+} driver_t;
 
-enum
-{
-    P1,
-    P7,
-    P8,
-    P9,
-    ANALOG_NB
-} analog_enum_t;
+driver_t gpio_drv = {
+    .init  = ll_digital_init,
+    .read  = ll_digital_read,
+    .write = ll_digital_write,
+};
+
+driver_t analog_drv = {
+    .init  = ll_analog_init,
+    .read  = ll_analog_read,
+    .write = 0,
+};
+
 /*******************************************************************************
  * Variables
  ******************************************************************************/
@@ -54,7 +44,9 @@ profile_voltage_t analog[ANALOG_NB];
 /*******************************************************************************
  * Function
  ******************************************************************************/
-static void rx_digit_write_cb(service_t *service, msg_t *msg);
+static inline void analog_service_init(void);
+static inline void digital_service_init(void);
+static void GpioDev_callback(service_t *service, msg_t *msg);
 
 /******************************************************************************
  * @brief init must be call in project init
@@ -63,98 +55,50 @@ static void rx_digit_write_cb(service_t *service, msg_t *msg);
  ******************************************************************************/
 void GpioDev_Init(void)
 {
+    // hardware initialization
+    gpio_drv.init();
+    analog_drv.init();
+
+    // services creation
+    analog_service_init();
+    digital_service_init();
+}
+
+/******************************************************************************
+ * @brief loop must be call in project loop
+ * @param None
+ * @return None
+ ******************************************************************************/
+void GpioDev_Loop(void)
+{
+    // read values from GPIO
+    gpio_drv.read(gpio);
+    // read values from ADC
+    analog_drv.read(analog);
+}
+
+/******************************************************************************
+ * @brief routine called by luos
+ * @param None
+ * @return None
+ ******************************************************************************/
+static void GpioDev_callback(service_t *service, msg_t *msg)
+{
+    if (msg->header.cmd == IO_STATE)
+    {
+        // write values on digital port
+        gpio_drv.write(gpio);
+    }
+}
+
+/******************************************************************************
+ * @brief Analog services initialization routine
+ * @param None
+ * @return None
+ ******************************************************************************/
+void analog_service_init(void)
+{
     revision_t revision = {.major = 1, .minor = 0, .build = 0};
-    // ******************* Analog measurement *******************
-    // interesting tutorial about ADC : https://visualgdb.com/tutorials/arm/stm32/adc/
-    ADC_ChannelConfTypeDef sConfig   = {0};
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    // Enable  ADC Gpio clocks
-    //__HAL_RCC_GPIOA_CLK_ENABLE(); => already enabled previously
-    /**ADC GPIO Configuration
-    */
-    // Configure analog input pin channel
-    GPIO_InitStruct.Pin  = P1_Pin | P9_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin  = P8_Pin | P7_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-    // Enable  ADC clocks
-    __HAL_RCC_ADC1_CLK_ENABLE();
-    // Setup Adc to loop on DMA continuously
-    GpioDev_adc.Instance                   = ADC1;
-    GpioDev_adc.Init.ClockPrescaler        = ADC_CLOCK_ASYNC_DIV1;
-    GpioDev_adc.Init.Resolution            = ADC_RESOLUTION_12B;
-    GpioDev_adc.Init.DataAlign             = ADC_DATAALIGN_RIGHT;
-    GpioDev_adc.Init.ScanConvMode          = ADC_SCAN_ENABLE;
-    GpioDev_adc.Init.EOCSelection          = ADC_EOC_SINGLE_CONV;
-    GpioDev_adc.Init.LowPowerAutoWait      = DISABLE;
-    GpioDev_adc.Init.LowPowerAutoPowerOff  = DISABLE;
-    GpioDev_adc.Init.ContinuousConvMode    = ENABLE;
-    GpioDev_adc.Init.DiscontinuousConvMode = DISABLE;
-    GpioDev_adc.Init.ExternalTrigConv      = ADC_SOFTWARE_START;
-    GpioDev_adc.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;
-    GpioDev_adc.Init.DMAContinuousRequests = ENABLE;
-    GpioDev_adc.Init.Overrun               = ADC_OVR_DATA_PRESERVED;
-    if (HAL_ADC_Init(&GpioDev_adc) != HAL_OK)
-    {
-        Error_Handler();
-    }
-
-    sConfig.Channel      = ADC_CHANNEL_0;
-    sConfig.Rank         = ADC_RANK_CHANNEL_NUMBER;
-    sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
-    if (HAL_ADC_ConfigChannel(&GpioDev_adc, &sConfig) != HAL_OK)
-    {
-        Error_Handler();
-    }
-    sConfig.Channel      = ADC_CHANNEL_9;
-    sConfig.Rank         = ADC_RANK_CHANNEL_NUMBER;
-    sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
-    if (HAL_ADC_ConfigChannel(&GpioDev_adc, &sConfig) != HAL_OK)
-    {
-        Error_Handler();
-    }
-    sConfig.Channel      = ADC_CHANNEL_8;
-    sConfig.Rank         = ADC_RANK_CHANNEL_NUMBER;
-    sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
-    if (HAL_ADC_ConfigChannel(&GpioDev_adc, &sConfig) != HAL_OK)
-    {
-        Error_Handler();
-    }
-    sConfig.Channel      = ADC_CHANNEL_1;
-    sConfig.Rank         = ADC_RANK_CHANNEL_NUMBER;
-    sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
-    if (HAL_ADC_ConfigChannel(&GpioDev_adc, &sConfig) != HAL_OK)
-    {
-        Error_Handler();
-    }
-
-    // Enable DMA1 clock
-    __HAL_RCC_DMA1_CLK_ENABLE();
-    /* ADC1 DMA Init */
-    /* ADC Init */
-    GpioDev_dma_adc.Instance                 = DMA1_Channel1;
-    GpioDev_dma_adc.Init.Direction           = DMA_PERIPH_TO_MEMORY;
-    GpioDev_dma_adc.Init.PeriphInc           = DMA_PINC_DISABLE;
-    GpioDev_dma_adc.Init.MemInc              = DMA_MINC_ENABLE;
-    GpioDev_dma_adc.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-    GpioDev_dma_adc.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
-    GpioDev_dma_adc.Init.Mode                = DMA_CIRCULAR;
-    GpioDev_dma_adc.Init.Priority            = DMA_PRIORITY_LOW;
-    if (HAL_DMA_Init(&GpioDev_dma_adc) != HAL_OK)
-    {
-        Error_Handler();
-    }
-    __HAL_LINKDMA(&GpioDev_adc, DMA_Handle, GpioDev_dma_adc);
-    // disable DMA Irq
-    HAL_NVIC_DisableIRQ(DMA1_Channel1_IRQn);
-    // Start infinite ADC measurement
-    HAL_ADC_Start_DMA(&GpioDev_adc, (uint32_t *)analog_input.unmap, sizeof(analog_input_t) / sizeof(uint32_t));
-    // ************* Analog services creation *******************
     // Link user variables to core profile.
     for (uint8_t i = 0; i < ANALOG_NB; i++)
     {
@@ -170,17 +114,27 @@ void GpioDev_Init(void)
     Luos_LaunchProfile(&analog_profile[P7], "analog_read_P7", revision);
     Luos_LaunchProfile(&analog_profile[P8], "analog_read_P8", revision);
     Luos_LaunchProfile(&analog_profile[P9], "analog_read_P9", revision);
+}
 
-    // ************* Digital services creation *******************
+/******************************************************************************
+ * @brief Digital services initialization routine
+ * @param None
+ * @return None
+ ******************************************************************************/
+void digital_service_init(void)
+{
+    revision_t revision = {.major = 1, .minor = 0, .build = 0};
     // Link user variables to core profile.
     for (uint8_t i = 0; i < GPIO_NB; i++)
     {
         if (i <= P4)
         {
-            Luos_LinkStateProfile(&gpio_profile[i], &gpio[i], rx_digit_write_cb);
+            // output pins uses callback to write data
+            Luos_LinkStateProfile(&gpio_profile[i], &gpio[i], GpioDev_callback);
         }
         else
         {
+            // input pins doesn't use callbacks
             Luos_LinkStateProfile(&gpio_profile[i], &gpio[i], 0);
         }
     }
@@ -199,32 +153,4 @@ void GpioDev_Init(void)
     Luos_LaunchProfile(&gpio_profile[P2], "digit_write_P2", revision);
     Luos_LaunchProfile(&gpio_profile[P3], "digit_write_P3", revision);
     Luos_LaunchProfile(&gpio_profile[P4], "digit_write_P4", revision);
-}
-/******************************************************************************
- * @brief loop must be call in project loop
- * @param None
- * @return None
- ******************************************************************************/
-void GpioDev_Loop(void)
-{
-    // update gpio input
-    gpio[P5].state = (bool)(HAL_GPIO_ReadPin(P5_GPIO_Port, P5_Pin) > 0);
-    gpio[P6].state = (bool)(HAL_GPIO_ReadPin(P6_GPIO_Port, P6_Pin) > 0);
-
-    // update analog measurement
-    analog[P1].voltage = ((float)analog_input.p1 / 4096.0f) * 3.3f;
-    analog[P7].voltage = ((float)analog_input.p7 / 4096.0f) * 3.3f;
-    analog[P8].voltage = ((float)analog_input.p8 / 4096.0f) * 3.3f;
-    analog[P9].voltage = ((float)analog_input.p9 / 4096.0f) * 3.3f;
-}
-
-static void rx_digit_write_cb(service_t *service, msg_t *msg)
-{
-    if (msg->header.cmd == IO_STATE)
-    {
-        // update pin state on event
-        HAL_GPIO_WritePin(P2_GPIO_Port, P2_Pin, gpio[P2].state);
-        HAL_GPIO_WritePin(P3_GPIO_Port, P3_Pin, gpio[P3].state);
-        HAL_GPIO_WritePin(P4_GPIO_Port, P4_Pin, gpio[P4].state);
-    }
 }
