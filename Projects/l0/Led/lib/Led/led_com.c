@@ -1,52 +1,160 @@
-#include "led_com.h"
+/******************************************************************************
+ * @file led_com
+ * @brief communication driver
+ * @author Luos
+ * @version 0.0.0
+ ******************************************************************************/
 
+#include "led_com.h"
+/*******************************************************************************
+ * Definitions
+ ******************************************************************************/
+
+/*******************************************************************************
+ * Variables
+ ******************************************************************************/
+TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
+
+/*******************************************************************************
+ * Function
+ ******************************************************************************/
+
+void LedTIM2_Init(void);
+void LedTIM3_Init(void);
+void TIM_MspPostInit(TIM_HandleTypeDef *timHandle);
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *tim_pwmHandle);
+
+/******************************************************************************
+ * @brief Communication init must be called in Led_Init
+ * @param None
+ * @return None
+ ******************************************************************************/
 void LedCom_Init(void)
 {
+    LedTIM2_Init();
+    LedTIM3_Init();
 
-    LED_RX_CLK();
-    LED_TX_CLK();
+    HAL_TIM_PWM_Start(&htim3, LED_TIM3_CHANNEL1);
+    HAL_TIM_PWM_Start(&htim3, LED_TIM3_CHANNEL2);
+    HAL_TIM_PWM_Start(&htim2, LED_TIM2_CHANNEL);
+}
 
-    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-    /* Peripheral clock enable */
-    //LL_APB1_GRP2_EnableClock(LL_APB1_GRP2_PERIPH_USART1);
-    /**USART1 GPIO Configuration
-  PA9   ------> USART1_TX
-  PA10   ------> USART1_RX
-  */
-    GPIO_InitStruct.Pin        = LED_RX_PIN;
-    GPIO_InitStruct.Mode       = LL_GPIO_MODE_ALTERNATE;
-    GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    GPIO_InitStruct.Pull       = LL_GPIO_PULL_UP;
-    GPIO_InitStruct.Alternate  = LED_RX_AF;
-    HAL_GPIO_Init(LED_RX_PORT, &GPIO_InitStruct);
+/******************************************************************************
+ * @brief TIM2 Init
+ * @param None
+ * @return None
+ ******************************************************************************/
+void LedTIM2_Init(void)
+{
+    TIM_MasterConfigTypeDef sMasterConfig = {0};
+    TIM_OC_InitTypeDef sConfigOC          = {0};
 
-    GPIO_InitStruct.Pin        = LED_TX_PIN;
-    GPIO_InitStruct.Mode       = LL_GPIO_MODE_ALTERNATE;
-    GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    GPIO_InitStruct.Pull       = LL_GPIO_PULL_UP;
-    GPIO_InitStruct.Alternate  = LED_TX_AF;
-    HAL_GPIO_Init(LED_TX_PORT, &GPIO_InitStruct);
+    htim2.Instance               = LED_TIM2_INSTANCE;
+    htim2.Init.Prescaler         = 0;
+    htim2.Init.CounterMode       = TIM_COUNTERMODE_UP;
+    htim2.Init.Period            = 2550 - 1;
+    htim2.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
+    htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    HAL_TIM_PWM_Init(&htim2);
 
-    LED_COM_CLOCK_ENABLE();
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterSlaveMode     = TIM_MASTERSLAVEMODE_DISABLE;
+    HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig);
 
-    LL_USART_InitTypeDef USART_InitStruct = {0};
+    sConfigOC.OCMode     = TIM_OCMODE_PWM1;
+    sConfigOC.Pulse      = 0;
+    sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
+    sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+    HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, LED_TIM2_CHANNEL);
 
-    /* USART1 interrupt Init */
-    NVIC_SetPriority(LED_COM_IRQ, 0);
-    NVIC_EnableIRQ(LED_COM_IRQ);
+    TIM_MspPostInit(&htim2);
+}
+/******************************************************************************
+ * @brief TIM3 Init
+ * @param None
+ * @return None
+ ******************************************************************************/
+void LedTIM3_Init(void)
+{
+    TIM_MasterConfigTypeDef sMasterConfig = {0};
+    TIM_OC_InitTypeDef sConfigOC          = {0};
 
-    USART_InitStruct.BaudRate            = 57600;
-    USART_InitStruct.DataWidth           = LL_USART_DATAWIDTH_8B;
-    USART_InitStruct.StopBits            = LL_USART_STOPBITS_1;
-    USART_InitStruct.Parity              = LL_USART_PARITY_NONE;
-    USART_InitStruct.TransferDirection   = LL_USART_DIRECTION_TX_RX;
-    USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
-    USART_InitStruct.OverSampling        = LL_USART_OVERSAMPLING_16;
-    LL_USART_Init(LED_COM, &USART_InitStruct);
-    LL_USART_DisableIT_CTS(LED_COM);
-    LL_USART_DisableOverrunDetect(LED_COM);
-    LL_USART_ConfigAsyncMode(LED_COM);
-    LL_USART_Enable(LED_COM);
+    htim3.Instance               = LED_TIM3_INSTANCE;
+    htim3.Init.Prescaler         = 0;
+    htim3.Init.CounterMode       = TIM_COUNTERMODE_UP;
+    htim3.Init.Period            = 2550 - 1;
+    htim3.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
+    htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    HAL_TIM_PWM_Init(&htim3);
+
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterSlaveMode     = TIM_MASTERSLAVEMODE_DISABLE;
+    HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig);
+
+    sConfigOC.OCMode     = TIM_OCMODE_PWM1;
+    sConfigOC.Pulse      = 0;
+    sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
+    sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+    HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, LED_TIM3_CHANNEL1);
+
+    HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, LED_TIM3_CHANNEL2);
+
+    TIM_MspPostInit(&htim3);
+}
+/******************************************************************************
+ * @brief TIM pins driver initilization
+ * @param None
+ * @return None
+ ******************************************************************************/
+void TIM_MspPostInit(TIM_HandleTypeDef *timHandle)
+{
+
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    if (timHandle->Instance == LED_TIM2_INSTANCE)
+    {
+        LED_TIM2_GPIO_CLK();
+        /**TIM2 GPIO Configuration
+    PA0     ------> TIM2_CH1
+    */
+        GPIO_InitStruct.Pin       = LED_TIM2_CH_PIN;
+        GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
+        GPIO_InitStruct.Pull      = GPIO_NOPULL;
+        GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_LOW;
+        GPIO_InitStruct.Alternate = LED_AF_TIM2;
+        HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    }
+    else if (timHandle->Instance == LED_TIM3_INSTANCE)
+    {
+
+        LED_TIM3_GPIO_CLK();
+        /**TIM3 GPIO Configuration
+    PB4     ------> TIM3_CH1
+    PB5     ------> TIM3_CH2
+    */
+        GPIO_InitStruct.Pin       = LED_TIM3_CH1_PIN | LED_TIM3_CH2_PIN;
+        GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
+        GPIO_InitStruct.Pull      = GPIO_NOPULL;
+        GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_LOW;
+        GPIO_InitStruct.Alternate = LED_AF_TIM3;
+        HAL_GPIO_Init(LED_TIM3_PORT, &GPIO_InitStruct);
+    }
+}
+
+/******************************************************************************
+ * @brief clocks initialization
+ * @param None
+ * @return None
+ ******************************************************************************/
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *tim_pwmHandle)
+{
+
+    if (tim_pwmHandle->Instance == LED_TIM2_INSTANCE)
+    {
+        __HAL_RCC_TIM2_CLK_ENABLE();
+    }
+    else if (tim_pwmHandle->Instance == LED_TIM3_INSTANCE)
+    {
+        __HAL_RCC_TIM3_CLK_ENABLE();
+    }
 }
