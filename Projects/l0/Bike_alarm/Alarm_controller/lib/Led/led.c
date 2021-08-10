@@ -4,11 +4,11 @@
  * @author Luos
  * @version 0.0.0
  ******************************************************************************/
-#include "main.h"
+
 #include "led.h"
 #include <math.h>
-#include "tim.h"
 #include "string.h"
+#include "led_com.h"
 #include "luos.h"
 
 /*******************************************************************************
@@ -38,9 +38,7 @@ void Led_Init(void)
 {
     revision_t revision = {.unmap = REV};
     time                = TimeOD_TimeFrom_ms(0.0);
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+    LedCom_Init();
     Luos_CreateService(Led_MsgHandler, COLOR_TYPE, "rgb_led", revision);
 }
 /******************************************************************************
@@ -81,11 +79,16 @@ static void Led_MsgHandler(service_t *service, msg_t *msg)
     }
 }
 
+/******************************************************************************
+ * @brief Set the value of the rgb channels
+ * @param rgb values structure
+ * @return None
+ ******************************************************************************/
 void pwm_setvalue(color_t *rgb)
 {
-    TIM3->CCR1 = (uint16_t)rgb->r * 10;
-    TIM3->CCR2 = (uint16_t)rgb->g * 10;
-    TIM2->CCR1 = (uint16_t)rgb->b * 10;
+    LED_TIM3_INSTANCE->CCR1 = (uint16_t)rgb->r * 10;
+    LED_TIM3_INSTANCE->CCR2 = (uint16_t)rgb->g * 10;
+    LED_TIM2_INSTANCE->CCR1 = (uint16_t)rgb->b * 10;
 }
 
 void HAL_SYSTICK_Callback(void)
