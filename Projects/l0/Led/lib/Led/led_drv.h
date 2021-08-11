@@ -7,6 +7,7 @@
 #ifndef LED_COM_H
 #define LED_COM_H
 
+#include "luos.h"
 #include "stm32f0xx_hal.h"
 #include "stm32f0xx_ll_exti.h"
 #include "stm32f0xx_ll_system.h"
@@ -37,6 +38,7 @@
  * Function
  ******************************************************************************/
 
-void LedCom_Init();
+void LedDrv_Init();
+uint8_t LedDrv_Write(color_t *rgb);
 
 #endif /* LED_COM_H */

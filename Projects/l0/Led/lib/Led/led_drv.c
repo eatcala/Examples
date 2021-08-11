@@ -5,7 +5,8 @@
  * @version 0.0.0
  ******************************************************************************/
 
-#include "led_com.h"
+#include "led_drv.h"
+
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -30,7 +31,7 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *tim_pwmHandle);
  * @param None
  * @return None
  ******************************************************************************/
-void LedCom_Init(void)
+void LedDrv_Init(void)
 {
     LedTIM2_Init();
     LedTIM3_Init();
@@ -157,4 +158,13 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *tim_pwmHandle)
     {
         __HAL_RCC_TIM3_CLK_ENABLE();
     }
+}
+
+uint8_t LedDrv_Write(color_t* rgb)
+{
+    LED_TIM3_INSTANCE->CCR1 = (uint16_t)rgb->r * 10;
+    LED_TIM3_INSTANCE->CCR2 = (uint16_t)rgb->g * 10;
+    LED_TIM2_INSTANCE->CCR1 = (uint16_t)rgb->b * 10;
+
+    return 0;
 }
