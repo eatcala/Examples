@@ -6,18 +6,30 @@
  ******************************************************************************/
 #include "main.h"
 #include "light_sensor.h"
-#include "analog.h"
 #include "string.h"
 
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
 
+typedef struct driver_light
+{
+    void (*init)(void);
+    uint8_t (*read)(illuminance_t *);
+    uint8_t (*write)(illuminance_t *);
+    uint8_t (*configure)(void *);
+} driver_light_t;
 /*******************************************************************************
  * Variables
  ******************************************************************************/
 volatile illuminance_t lux = 0.0;
 
+driver_light_t light_sensor_drv = {
+    .init      = LightSensorDrv_Init,
+    .read      = LightSensorDrv_Read,
+    .write     = 0,
+    .configure = 0,
+};
 /*******************************************************************************
  * Function
  ******************************************************************************/
@@ -32,7 +44,7 @@ void LightSensor_Init(void)
 {
     revision_t revision = {.unmap = REV};
     // **************** communication driver init *************
-    LightSensorCom_Init();
+    light_sensor_drv.init();
     // ******************* service creation *******************
     Luos_CreateService(LightSensor_MsgHandler, LIGHT_TYPE, "light_sensor", revision);
 }
@@ -43,7 +55,7 @@ void LightSensor_Init(void)
  ******************************************************************************/
 void LightSensor_Loop(void)
 {
-    lux = (((float)analog_input.light / 4096.0f) * 3.3f) * 1000.0f;
+    light_sensor_drv.read(&lux);
 }
 /******************************************************************************
  * @brief Msg Handler call back when a msg receive for this service

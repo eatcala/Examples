@@ -8,7 +8,7 @@
 #define LIGHT_SENSOR_H
 
 #include "luos.h"
-#include "light_sensor_com.h"
+#include "light_sensor_drv.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/

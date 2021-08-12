@@ -4,7 +4,7 @@
  * @author Luos
  * @version 0.0.0
  ******************************************************************************/
-#include "light_sensor_com.h"
+#include "light_sensor_drv.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -24,7 +24,7 @@ void LightSensorDMA_Init(void);
  * @param None
  * @return None
  ******************************************************************************/
-void LightSensorCom_Init(void)
+void LightSensorDrv_Init(void)
 {
     // ******************* Analog measurement *******************
     GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -64,19 +64,13 @@ void LightSensorADC_Init()
     LightSensor_adc.Init.ExternalTrigConvEdge  = ADC_EXTERNALTRIGCONVEDGE_NONE;
     LightSensor_adc.Init.DMAContinuousRequests = ENABLE;
     LightSensor_adc.Init.Overrun               = ADC_OVR_DATA_PRESERVED;
-    if (HAL_ADC_Init(&LightSensor_adc) != HAL_OK)
-    {
-        Error_Handler();
-    }
+    HAL_ADC_Init(&LightSensor_adc);
 
     // Add ADC channel to Luos adc configuration.
     sConfig.Channel      = LIGHTSENSOR_ADC_CHANNEL;
     sConfig.Rank         = ADC_RANK_CHANNEL_NUMBER;
     sConfig.SamplingTime = ADC_SAMPLETIME_239CYCLES_5;
-    if (HAL_ADC_ConfigChannel(&LightSensor_adc, &sConfig) != HAL_OK)
-    {
-        Error_Handler();
-    }
+    HAL_ADC_ConfigChannel(&LightSensor_adc, &sConfig);
 }
 
 /******************************************************************************
@@ -98,10 +92,7 @@ void LightSensorDMA_Init(void)
     LightSensor_dma_adc.Init.MemDataAlignment    = DMA_MDATAALIGN_WORD;
     LightSensor_dma_adc.Init.Mode                = DMA_CIRCULAR;
     LightSensor_dma_adc.Init.Priority            = DMA_PRIORITY_LOW;
-    if (HAL_DMA_Init(&LightSensor_dma_adc) != HAL_OK)
-    {
-        Error_Handler();
-    }
+    HAL_DMA_Init(&LightSensor_dma_adc);
     // relinik DMA
     __HAL_LINKDMA(&LightSensor_adc, DMA_Handle, LightSensor_dma_adc);
 
@@ -110,4 +101,15 @@ void LightSensorDMA_Init(void)
     // Start infinite ADC measurement
     // Restart DMA
     HAL_ADC_Start_DMA(&LightSensor_adc, (uint32_t *)analog_input.unmap, sizeof(analog_input.unmap) / sizeof(uint32_t));
+}
+/******************************************************************************
+ * @brief Illuminance read 
+ * @param illuminance
+ * @return error value
+ ******************************************************************************/
+uint8_t LightSensorDrv_Read(illuminance_t *illuminance)
+{
+    illuminance_t illu = (((float)analog_input.light / 4096.0f) * 3.3f) * 1000.0f;
+    illuminance        = (illuminance_t *)&illu;
+    return 0;
 }

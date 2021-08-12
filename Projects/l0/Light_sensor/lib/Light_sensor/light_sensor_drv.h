@@ -11,6 +11,7 @@
 #include "stm32f0xx_ll_system.h"
 #include "analog.h"
 #include "main.h"
+#include "luos.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
@@ -33,4 +34,5 @@
  * Function
  ******************************************************************************/
 
-void LightSensorCom_Init(void);
+void LightSensorDrv_Init(void);
+uint8_t LightSensorDrv_Read(illuminance_t *illuminance);
