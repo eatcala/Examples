@@ -43,7 +43,8 @@ typedef struct __attribute__((__packed__))
 
 typedef enum
 {
-    ALARM_CONTROLLER_APP = LUOS_LAST_TYPE,
+    FADER_TYPE = LUOS_LAST_TYPE,
+    ALARM_CONTROLLER_APP,
     START_CONTROLLER_APP
 } alarm_apps_type_t;
 

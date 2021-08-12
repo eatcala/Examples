@@ -76,7 +76,7 @@ void AlarmController_Loop(void)
         {
             // Make services configurations
             // try to find a RGB led and set light transition time just to be fancy
-            int id = RoutingTB_IDFromType(COLOR_TYPE);
+            int id = RoutingTB_IDFromType(FADER_TYPE);
             if (id > 0)
             {
                 msg_t msg;
@@ -140,7 +140,7 @@ void AlarmController_Loop(void)
             if ((HAL_GetTick() - last_blink) >= 500)
             {
                 blink_nb++;
-                int id = RoutingTB_IDFromType(COLOR_TYPE);
+                int id = RoutingTB_IDFromType(FADER_TYPE);
                 if (id > 0)
                 {
                     // we get a led alarm, set color
