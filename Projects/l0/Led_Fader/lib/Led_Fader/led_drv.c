@@ -78,7 +78,6 @@ void LedTIM2_Init(void)
     GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = LED_AF_TIM2;
     HAL_GPIO_Init(LED_TIM3_PORT, &GPIO_InitStruct);
-
 }
 /******************************************************************************
  * @brief TIM3 Init
@@ -114,7 +113,7 @@ void LedTIM3_Init(void)
     HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, LED_TIM3_CHANNEL2);
 
     LED_TIM3_GPIO_CLK();
-        /**TIM3 GPIO Configuration
+    /**TIM3 GPIO Configuration
     PB4     ------> TIM3_CH1
     PB5     ------> TIM3_CH2
     */

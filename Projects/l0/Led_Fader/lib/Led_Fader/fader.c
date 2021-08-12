@@ -31,7 +31,7 @@ volatile float coef[3] = {0.0};
  ******************************************************************************/
 void Fader_Init()
 {
-    //init time 
+    //init time
     time = TimeOD_TimeFrom_ms(0.0);
 }
 
@@ -47,7 +47,7 @@ void Fader_Loop()
     //calculate how much time is the led open
     elapsed_ms = Luos_GetSystick() - init_time;
     //find the led id
-    int id = RoutingTB_IDFromType(COLOR_TYPE);
+    int id            = RoutingTB_IDFromType(COLOR_TYPE);
     msg.header.target = id;
     if (time != 0)
     {
@@ -73,7 +73,7 @@ void Fader_Loop()
     else
     {
         //send the full color
-        IlluminanceOD_ColorToMsg((color_t *)&target_rgb, &msg); 
+        IlluminanceOD_ColorToMsg((color_t *)&target_rgb, &msg);
         Luos_SendMsg(0, &msg);
     }
 }
@@ -82,7 +82,7 @@ void Fader_Loop()
  * @param rgb value
  * @return None
  ******************************************************************************/
-void Fader_WriteColor(color_t* rgb)
+void Fader_WriteColor(color_t *rgb)
 {
     memcpy((color_t *)&last_rgb, (color_t *)&target_rgb, sizeof(color_t));
     //IlluminanceOD_ColorFromMsg((color_t *)&target_rgb, msg);

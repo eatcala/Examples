@@ -21,7 +21,7 @@
  ******************************************************************************/
 void Fader_Init();
 void Fader_Loop();
-void Fader_WriteColor(color_t* rgb);
+void Fader_WriteColor(color_t *rgb);
 void Fader_WriteTime(time_luos_t input_time);
 
 #endif /* FADER_H */

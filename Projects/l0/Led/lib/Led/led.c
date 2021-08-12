@@ -20,7 +20,7 @@ typedef struct driver_color
     uint8_t (*write)(color_t *);
     uint8_t (*configure)(void *);
 
-}driver_color_t;
+} driver_color_t;
 
 /*******************************************************************************
  * Variables
@@ -28,9 +28,9 @@ typedef struct driver_color
 
 //Initialization of led driver functions
 driver_color_t led_driver = {
-    .init  = LedDrv_Init,
-    .read  = 0,
-    .write = LedDrv_Write,
+    .init      = LedDrv_Init,
+    .read      = 0,
+    .write     = LedDrv_Write,
     .configure = 0};
 
 /*******************************************************************************
