@@ -20,7 +20,7 @@
 /*******************************************************************************
  * Function
  ******************************************************************************/
-void Led_Init(void);
-void Led_Loop(void);
+void LedFader_Init(void);
+void LedFader_Loop(void);
 
 #endif /* LED_H */
