@@ -44,9 +44,11 @@
  *    NBR_RETRY             |              10            | Send Retry number in case of NACK or collision
 ******************************************************************************/
 
-#define MAX_CONTAINER_NUMBER 2
-#define MSG_BUFFER_SIZE      2048
-#define MAX_MSG_NB           40
+#define MAX_CONTAINER_NUMBER    5
+#define MSG_BUFFER_SIZE         2048
+#define MAX_MSG_NB              10
+#define NBR_PORT                2
+#define NBR_RETRY               10
 
 /*******************************************************************************
  * LUOS HAL LIBRARY DEFINITION
@@ -89,29 +91,79 @@
 /*******************************************************************************
  * MCU CONFIG
  ******************************************************************************/
+#define MCUFREQ     84000000
+#define TIMERDIV    1
+#define USE_CRC_HW  0
+#define USE_TX_IT   0
 
 /*******************************************************************************
  * PINOUT CONFIG
  ******************************************************************************/
+#define PORT_CLOCK_ENABLE()           \
+    do                                \
+    {                                 \
+        __HAL_RCC_GPIOA_CLK_ENABLE(); \
+        __HAL_RCC_GPIOB_CLK_ENABLE(); \
+    } while (0U)
+
+//PTP pin definition
+#define PTPA_PIN    GPIO_PIN_8
+#define PTPA_PORT   GPIOA
+#define PTPA_IRQ    EXTI9_5_IRQn
+
+#define PTPB_PIN    GPIO_PIN_13
+#define PTPB_PORT   GPIOB
+#define PTPB_IRQ    EXTI15_10_IRQn
+
+//COM pin definition
+#define TX_LOCK_DETECT_PIN  DISABLE //GPIO_PIN_11
+#define TX_LOCK_DETECT_PORT DISABLE //GPIOA
+#define TX_LOCK_DETECT_IRQ  DISABLE //EXTI15_10_IRQn
+
+#define RX_EN_PIN   GPIO_PIN_14
+#define RX_EN_PORT  GPIOB
+
+#define TX_EN_PIN   GPIO_PIN_15
+#define TX_EN_PORT  GPIOB
+
+#define COM_TX_PIN  GPIO_PIN_11
+#define COM_TX_PORT GPIOA
+#define COM_TX_AF   GPIO_AF7_USART1
+
+#define COM_RX_PIN  GPIO_PIN_10
+#define COM_RX_PORT GPIOA
+#define COM_RX_AF   GPIO_AF7_USART1
+
+#define PINOUT_IRQHANDLER(PIN) HAL_GPIO_EXTI_Callback(PIN)
 
 /*******************************************************************************
  * COM CONFIG
  ******************************************************************************/
+#define LUOS_COM_CLOCK_ENABLE() __HAL_RCC_USART1_CLK_ENABLE()
+#define LUOS_COM        USART1
+#define LUOS_COM_IRQ    USART1_IRQn
+#define LUOS_COM_IRQHANDLER() USART1_IRQHandler()
 
 /*******************************************************************************
  * COM DMA CONFIG
  ******************************************************************************/
+#define LUOS_DMA_CLOCK_ENABLE() __HAL_RCC_DMA2_CLK_ENABLE()
+#define LUOS_DMA                DMA2
+#define LUOS_DMA_CHANNEL        LL_DMA_CHANNEL_4
 
 /*******************************************************************************
  * COM TIMEOUT CONFIG
  ******************************************************************************/
-#define LUOS_TIMER_CLOCK_ENABLE() __HAL_RCC_TIM3_CLK_ENABLE()
-#define LUOS_TIMER                TIM3
-#define LUOS_TIMER_IRQ            TIM3_IRQn
-#define LUOS_TIMER_IRQHANDLER()   TIM3_IRQHandler()
+#define LUOS_TIMER_CLOCK_ENABLE()   __HAL_RCC_TIM3_CLK_ENABLE()
+#define LUOS_TIMER                  TIM3
+#define LUOS_TIMER_IRQ              TIM3_IRQn
+#define LUOS_TIMER_IRQHANDLER()     TIM3_IRQHandler()
+
 /*******************************************************************************
  * FLASH CONFIG
  ******************************************************************************/
-#define FLASH_SECTOR FLASH_SECTOR_7
+#define PAGE_SIZE               (uint32_t)0x400
+#define FLASH_SECTOR            FLASH_SECTOR_7
+#define ADDRESS_LAST_PAGE_FLASH ((uint32_t)(FLASH_END - PAGE_SIZE))
 
 #endif /* _NODE_CONFIG_H_ */
