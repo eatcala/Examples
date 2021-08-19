@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "Gate_SerialCom",
+			"path": "Projects\\NUCLEO-F401RE\\Gate_SerialCom"
+		}
+	],
+	"settings": {}
+}
