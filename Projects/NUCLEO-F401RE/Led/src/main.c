@@ -100,6 +100,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
         Luos_Loop();
         Led_Loop();
+        // HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
   }
   /* USER CODE END 3 */
 }

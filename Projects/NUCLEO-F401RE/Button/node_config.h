@@ -45,7 +45,8 @@
 ******************************************************************************/
 
 #define MAX_CONTAINER_NUMBER 1
-#define MAX_MSG_NB           5
+#define MSG_BUFFER_SIZE      2048
+#define MAX_MSG_NB           10
 
 /*******************************************************************************
  * LUOS HAL LIBRARY DEFINITION
@@ -88,10 +89,40 @@
 /*******************************************************************************
  * MCU CONFIG
  ******************************************************************************/
+#define MCUFREQ     84000000
+#define TIMERDIV    1
+#define USE_CRC_HW  0
 
 /*******************************************************************************
  * PINOUT CONFIG
  ******************************************************************************/
+//PTP pin definition
+#define PTPA_PIN    GPIO_PIN_8
+#define PTPA_PORT   GPIOA
+#define PTPA_IRQ    EXTI9_5_IRQn
+
+#define PTPB_PIN    GPIO_PIN_13
+#define PTPB_PORT   GPIOB
+#define PTPB_IRQ    EXTI15_10_IRQn
+
+//COM pin definition
+// #define TX_LOCK_DETECT_PIN GPIO_PIN_11
+// #define TX_LOCK_DETECT_PORT GPIOA
+// #define TX_LOCK_DETECT_IRQ EXTI15_10_IRQn
+
+#define RX_EN_PIN   GPIO_PIN_14
+#define RX_EN_PORT  GPIOB
+
+#define TX_EN_PIN   GPIO_PIN_15
+#define TX_EN_PORT  GPIOB
+
+#define COM_TX_PIN  GPIO_PIN_9
+#define COM_TX_PORT GPIOA
+#define COM_TX_AF   GPIO_AF7_USART1
+
+#define COM_RX_PIN  GPIO_PIN_10
+#define COM_RX_PORT GPIOA
+#define COM_RX_AF   GPIO_AF7_USART1
 
 /*******************************************************************************
  * COM CONFIG

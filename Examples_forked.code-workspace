@@ -6,7 +6,22 @@
 		{
 			"name": "Gate_SerialCom",
 			"path": "Projects\\NUCLEO-F401RE\\Gate_SerialCom"
+		},
+		{
+			"name": "Led",
+			"path": "Projects\\NUCLEO-F401RE\\Led"
+		},
+		{
+			"name": "Button",
+			"path": "Projects\\NUCLEO-F401RE\\Button"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"port_manager.h": "c",
+			"luos.h": "c",
+			"msg_alloc.h": "c",
+			"luos_hal.h": "c"
+		}
+	}
 }
